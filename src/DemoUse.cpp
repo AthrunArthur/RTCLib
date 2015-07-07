@@ -2,6 +2,16 @@
 #include "DemoUse.h"
 
 #include <iostream>
+#include <map>
+
+static int g_data_counter = 0;
+static std::map<void *, int> g_buf_to_counter;
+enum{
+  e_in = 1,
+  e_out = 2,
+  e_drop = 3,
+  e_recycle = 4,
+};
 
 DemoServerDataBuffer::DemoServerDataBuffer(size_t s, size_t buf_size)
 {
@@ -23,6 +33,10 @@ DemoServerDataBuffer::DemoServerDataBuffer(size_t s, size_t buf_size)
 	}
 	mh_sem = ::CreateSemaphore(NULL, 0, 1, NULL);
 	mi_buf_size = buf_size;
+	mp_profiler = NULL;
+#ifdef PROFILE_DEMO_DATA_BUFFER
+  mp_profiler = new ff::RTProfiler("demo_server_data_buffer.txt");
+#endif
 }
 
 DemoServerDataBuffer::~DemoServerDataBuffer(){
@@ -35,6 +49,10 @@ DemoServerDataBuffer::~DemoServerDataBuffer(){
 		delete[] mo_recycle_buf[i].first;
 	}
 	CloseHandle(mh_sem);
+	if(mp_profiler){
+	  delete mp_profiler;
+	  mp_profiler = NULL;
+	}
 }
 
 void DemoServerDataBuffer::write_to_head(const char * buf, size_t len){
@@ -44,6 +62,10 @@ void DemoServerDataBuffer::write_to_head(const char * buf, size_t len){
 	{
 		tbuf = mo_filled_buf.front();
 		mo_filled_buf.pop();
+#ifdef PROFILE_DEMO_DATA_BUFFER
+    int c = g_buf_to_counter[tbuf.first];
+    mp_profiler->record(e_drop, c);
+#endif
 	}
 	else{
 		tbuf = mo_recycle_buf.back();
@@ -54,6 +76,11 @@ void DemoServerDataBuffer::write_to_head(const char * buf, size_t len){
 	memcpy(tbuf.first, buf, len);
 	lock();
 	mo_filled_buf.push(tbuf);
+#ifdef PROFILE_DEMO_DATA_BUFFER
+  g_data_counter ++;
+  g_buf_to_counter[tbuf.first] = g_data_counter;
+  mp_profiler->record(e_in, g_data_counter);
+#endif
 	unlock();
 	ReleaseSemaphore(mh_sem, 1, NULL);
 }
@@ -66,10 +93,17 @@ void DemoServerDataBuffer::handle_tail(DataHandler pHandler, LPVOID param, DWORD
 	lock();
 	buf_t tbuf = mo_filled_buf.front();
 	mo_filled_buf.pop();
+#ifdef PROFILE_DEMO_DATA_BUFFER
+  int c = g_buf_to_counter[tbuf.first];
+  mp_profiler->record(e_out, c);
+#endif
 	unlock();
 	(*pHandler)(tbuf.first, tbuf.second, param);
 	memset(tbuf.first, 0, tbuf.second);
 	lock();
+#ifdef PROFILE_DEMO_DATA_BUFFER
+	mp_profiler->record(e_recycle, c);
+#endif
 	mo_recycle_buf.push_back(tbuf);
 	unlock();
 }
@@ -127,4 +161,5 @@ DWORD DemoServerDataHandler::recv_sh_mem(LPVOID lpParam)
 }
 
 
+#undef RECORD
 

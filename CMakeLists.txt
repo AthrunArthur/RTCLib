@@ -8,7 +8,9 @@ set(src include/DemoUse.h
   include/IPCShMem.h
   include/IPCSigna.h
   include/SignalHandler.h
+  include/Utility.h
   src/DemoUse.cpp
-  src/ErrorHandler.cpp)
+  src/ErrorHandler.cpp
+  src/Utility.cpp)
 
 add_library(RTCLib ${src})

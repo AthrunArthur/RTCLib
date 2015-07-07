@@ -10,6 +10,7 @@
 #include <Windows.h>
 #include <map>
 #include <queue>
+#include "Utility.h"
 
 //! NOTE: you may want to use your own error handler instead of EDefaultErrorHandler;
 
@@ -52,10 +53,11 @@ protected:
 	HANDLE m_mutex;
 	size_t mi_buf_size;
 	HANDLE mh_sem;
+  ff::RTProfiler * mp_profiler;
 };
 
-//! This is a a data handler for the server side. 
-//! We define this to wrap the details of handling shared memory. 
+//! This is a a data handler for the server side.
+//! We define this to wrap the details of handling shared memory.
 class DemoServerDataHandler: public SignalHandler_t
 {
 public:
