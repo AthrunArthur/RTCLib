@@ -5,6 +5,8 @@ message(STATUS "This is SOURCE dir" ${PROJECT_SOURCE_DIR})
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+add_definitions(-DPROFILE_DEMO_DATA_BUFFER)
+
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 set(src include/DemoUse.h

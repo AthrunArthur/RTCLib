@@ -1,6 +1,7 @@
 //Author: Xuepeng Fan, xuepeng_fan@163.com, 2015.07.07
 #include "Utility.h"
 #include <fstream>
+#include <iostream>
 
 
 namespace ff
@@ -34,7 +35,7 @@ RTProfiler::RTProfiler(const char * fp)
 
 
 void RTProfiler::record(event_id_t event_id, int event_value){
-  RecordItem ri;
+  RecordItem<int> ri;
   ri.time_stamp = HighResolutionTimer::current_time();
   ri.event_id = event_id;
   ri.event_value = event_value;
@@ -52,7 +53,7 @@ void RTProfiler::dump_to_file(){
   if(!ss){
     std::cout<<"cannot open file: "<<mstr_fp<<std::endl;
   }
-  for(int i = 0; i < m_oIntItems.size(); ++i){
+  for(size_t i = 0; i < m_oIntItems.size(); ++i){
     ss<<m_oIntItems[i].time_stamp<<" "<<m_oIntItems[i].event_id<<" "<<m_oIntItems[i].event_value<<"\n";
   }
   ss.close();
