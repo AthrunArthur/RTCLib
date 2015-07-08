@@ -7,6 +7,10 @@ from matplotlib.backends.backend_pdf import PdfPages
 import time
 from common import *
 
+
+time_stamp = str(time.time())
+time_stamp = time_stamp[0: time_stamp.find('.')]
+
 def read_buffer_profile(fp):
     res = []
     for line in open(fp):
@@ -58,7 +62,7 @@ def plot_arrive_interval(profile_data):
     avg_ds = 1.0 * sum(ds) / len(ds)
     print 'Average arrive interval: ' + str(avg_ds)
     xs = range(1, len(ds) + 1)
-    fp = os.path.join(output_dir, "arrive_interval" + str(time.time()) + ".pdf")
+    fp = os.path.join(output_dir, "arrive_interval" + time_stamp + ".pdf")
     with PdfPages(fp) as pdf:
         plt.plot(xs, ds)
         plt.title("The interval of frames' arriving")
@@ -78,10 +82,10 @@ def plot_out_interval(profile_data):
     avg_ds = 1.0 * sum(ds) / len(ds)
     print 'Average out interval: ' + str(avg_ds)
     xs = range(1, len(ds) + 1)
-    fp = os.path.join(output_dir, "out_interval" + str(time.time()) + ".pdf")
+    fp = os.path.join(output_dir, "out_interval" + time_stamp + ".pdf")
     with PdfPages(fp) as pdf:
         plt.plot(xs, ds)
-        plt.title("The interval of frames' arriving")
+        plt.title("The interval of frames' getting out from the buffer")
         plt.xlabel("frames")
         plt.ylabel("times (micro second, ms)")
         pdf.savefig()
@@ -95,18 +99,54 @@ def plot_queue_time(profile_data):
     ds = [x[1][2] - x[1][1] for x in parsed_data]
 
     avg_ds = 1.0 * sum(ds) / len(ds)
-    print 'Average out interval: ' + str(avg_ds)
+    print 'Average queue time: ' + str(avg_ds)
     xs = range(1, len(ds) + 1)
-    fp = os.path.join(output_dir, "queue_time" + str(time.time()) + ".pdf")
+    fp = os.path.join(output_dir, "queue_time" + time_stamp + ".pdf")
     with PdfPages(fp) as pdf:
         plt.plot(xs, ds)
-        plt.title("The interval of frames' arriving")
+        plt.title("The life-time (queue_time) of each frame")
         plt.xlabel("frames")
         plt.ylabel("times (micro second, ms)")
         pdf.savefig()
         plt.close()
 
 
+def plot_process_time(profile_data):
+    parsed_data = [x for x in profile_data if x[1][2] != 0]
+
+    ds = [x[1][4] - x[1][2] for x in parsed_data]
+
+    avg_ds = 1.0 * sum(ds) / len(ds)
+    print 'Average process time: ' + str(avg_ds)
+    xs = range(1, len(ds) + 1)
+    fp = os.path.join(output_dir, "process_time" + time_stamp + ".pdf")
+    with PdfPages(fp) as pdf:
+        plt.plot(xs, ds)
+        plt.title("Each frame's process time")
+        plt.xlabel("frames")
+        plt.ylabel("times (micro second, ms)")
+        pdf.savefig()
+        plt.close()
+
+def plot_drop_time(profile_data):
+    droped_data = [x for x in profile_data if x[1][3] != 0]
+
+    if len(droped_data) == 0:
+        return
+    ds = [x[1][3] - x[1][1] for x in droped_data]
+
+
+    avg_ds = 1.0 * sum(ds) / len(ds)
+    print 'Average process time: ' + str(avg_ds)
+    xs = range(1, len(ds) + 1)
+    fp = os.path.join(output_dir, "drop_time" + time_stamp + ".pdf")
+    with PdfPages(fp) as pdf:
+        plt.plot(xs, ds)
+        plt.title("Each frame's drop time")
+        plt.xlabel("frames")
+        plt.ylabel("times (micro second, ms)")
+        pdf.savefig()
+        plt.close()
 
 
 
@@ -119,6 +159,8 @@ def main():
         plot_arrive_interval(profile_data)
         plot_out_interval(profile_data)
         plot_queue_time(profile_data)
+        plot_process_time(profile_data)
+        plot_drop_time(profile_data)
 
 if __name__ == "__main__":
     main()
